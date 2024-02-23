@@ -8,16 +8,14 @@ import { useEffect, useRef, useState } from "react";
 const Home = () => {
 
     let[forceRender , setForceRender] = useState(0);
-    let[tasklist , settasklist] = useState(null);                                       // use genric names to save data
+    let[tasklist , settasklist] = useState(null);                                       
     let[pending , setPending] = useState(true);
     let[error , setError] = useState(null);
 
-    let[temp , setTemp] = useState(null);                                       // use genric names to save data
-    let searchKey = useRef();
-    let sort = useRef();
-    let order = useRef();
-
-
+    let[temp , setTemp] = useState(null);     // for duplicate copy of tasklist                          
+    let searchKey = useRef();                 // to access value from searchbar
+    let sort = useRef();                      // to access value from sort dropdown
+    let order = useRef();                     // to access value from order dropdown
 
     useEffect(()=>{
         setTimeout(()=>{
@@ -30,40 +28,37 @@ const Home = () => {
                 throw new Error("Sorry !! Invalid request")
             })
             .then((data)=>{ 
-                let pr = {
-                    low : 0 ,
-                    medium : 1 ,
-                    high : 2 ,
-                    urgent : 3
-                }
+                // assigning the number based on priority , which helps for priority sorting
+                let pr = {low : 0 ,medium : 1 ,high : 2 ,urgent : 3}
+                data.forEach((v)=>{v.p = pr[v.priority];})
 
-                data.forEach((v)=>{
-                    v.p = pr[v.priority];
-                    console.log(v.p , v.priority);
-                })
-
-
-                settasklist(data);  
+                // saving the data
+                settasklist(data);      
                 setTemp(data);   
                 setPending(false);
-            })            // save the data to state
+            })         
             .catch((err)=>{ setError(err.message); setPending(false);})
         } , 500)   
         
-    } , [forceRender])
+    } , [forceRender])  // if forceRender is changed , then execute useeffect again
     
-    let handleDelete = (id)=>{
+    let handleDelete = (id)=>{  // accept the if from particular button click
+
+        // give extra confirmation to user for deleting 
         if(window.confirm("Are you sure ?"))
         {
+            // target the task object and DELETE
             fetch("http://localhost:4001/tasklist/"+id , {method:"DELETE"})
             .then(()=>{
                 toast.warn("Task deleted !");
-                setForceRender(forceRender+1);
+                // to see the live changes in UI after deleting
+                setForceRender(forceRender+1);    
             })
         }
     }
 
     let handleSearch = ()=>{
+        // use filter method for temp array and store returned array to tasklist
         let filterdArray = temp.filter((v,i,a)=>{ 
             return v.taskname.includes(searchKey.current.value) || v.id==searchKey.current.value
         });
@@ -72,8 +67,13 @@ const Home = () => {
 
     let handleSort = ()=>{
 
-        let x = sort.current.value;
+        // make a duplicate copy of tasklist
+        let tl = [...tasklist];
 
+        // selected sort by option from user 
+        let x = sort.current.value; 
+
+        // condition object , which returns the function based on user sort option
         let cond = {
             name : (i,j)=>{ return i.taskname > j.taskname} ,
             start : (i,j)=>{ return new Date(i.start_date)> new Date(j.start_date)} ,
@@ -81,8 +81,8 @@ const Home = () => {
             added : (i,j)=>{ return new Date(i.added_on) > new Date(j.added_on)} ,
             priority : (i,j)=>{ return i.p > j.p} ,
         }
-        
-        let tl = [...tasklist];
+
+        // sort the array in ascending order based on user sort option
         for (let i = 0; i < tl.length; i++) 
         {
             for (let j = i+1; j < tl.length; j++) 
@@ -96,11 +96,13 @@ const Home = () => {
             }            
         }
 
+        // to change the order if user has selected high to low
         if(order.current.value == "high")
         {
             tl.reverse()
         }
-        console.log(tl);
+
+        // save the sorted array to tasklist
         settasklist(tl);
     }
 
