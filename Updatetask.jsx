@@ -34,7 +34,7 @@ const Updatetask = () => {
         let updatedTask = {
             taskname : tn.current.value ,
             desc     : td.current.value ,
-            added_on : new Date().toLocaleDateString() ,
+            added_on : new Date().toDateString() ,
             start_date : new Date(sd.current.value).toDateString() ,
             end_date : new Date(ed.current.value).toDateString() ,
             priority : p.current.value
